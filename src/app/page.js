@@ -92,7 +92,6 @@ const ExternalDragDrop = () => {
           console.error('Error Delete Event:', error);
         })};
 
-
     const onActionComplete = (args) => {
       console.log("Data inside args: ", args);     
       if (args.requestType === 'eventCreated') {
@@ -105,7 +104,7 @@ const ExternalDragDrop = () => {
           StartTime: formatToMySQL(event.StartTime),  
           EndTime: formatToMySQL(event.EndTime),      
           IsAllDay: event.IsAllDay || false,   
-          Description: event.Description || 'Descripción no disponible',  
+          Description: event.Description || 'Description no disponible',  
           DepartmentID: event.DepartmentID,  
           EmployeeId: event.EmployeeId || parseInt(draggedItemId, 10), // ← recupera si se pierde 
         };
@@ -116,21 +115,35 @@ const ExternalDragDrop = () => {
 
       if (args.requestType === 'eventChanged') {
         const event = args.data[0]; 
-        function formatToMySQL(dateString) {
-          return dayjs(dateString).format('YYYY-MM-DD HH:mm:ss');
+        const currentEvents = scheduleObj.current.getEvents(); 
+        console.log("OnActionComplete: ", currentEvents);
+
+        const overlappingEvents = currentEvents.filter(existingEvent => {
+          return (event.StartTime < existingEvent.EndTime && event.EndTime > existingEvent.StartTime) &&
+                (event.EmployeeId === existingEvent.EmployeeId) &&
+                (event.DepartmentID === existingEvent.DepartmentID) && 
+                (event.Id !== existingEvent.Id);
+        });
+        if (overlappingEvents.length > 0) {
+          alert("Employee has a Task another Department in this Time");
+          args.cancel = true;  
+        } else {
+          function formatToMySQL(dateString) {
+            return dayjs(dateString).format('YYYY-MM-DD HH:mm:ss');
+          }
+          const eventData = {
+            Name: event.Name,  
+            StartTime: formatToMySQL(event.StartTime),  
+            EndTime: formatToMySQL(event.EndTime),      
+            IsAllDay: event.IsAllDay || false,   
+            Description: event.Description || 'Description no disponible',  
+            DepartmentID: event.DepartmentID,
+            Id: event.Id,
+          };
+          console.log("On Update Array", event);
+          console.log("On Update Datos transformados", eventData);
+          handleUpdateEvent(eventData);
         }
-        const eventData = {
-          Name: event.Name,  
-          StartTime: formatToMySQL(event.StartTime),  
-          EndTime: formatToMySQL(event.EndTime),      
-          IsAllDay: event.IsAllDay || false,   
-          Description: event.Description || 'DescripSción no disponible',  
-          DepartmentID: event.DepartmentID,
-          Id: event.Id,
-        };
-        console.log("On Update Array", event);
-        console.log("On Update Datos transformados", eventData);
-        handleUpdateEvent(eventData);
       }
 
       if(args.requestType === 'eventRemoved') {
@@ -140,7 +153,6 @@ const ExternalDragDrop = () => {
         handleDeleteEvent(Id);
       }
     };
-
   
     // const fields = { dataSource: dataSource.waitingList, id: 'Id', text: 'Name' };
 
@@ -221,14 +233,30 @@ const ExternalDragDrop = () => {
     
     const onActionBegin = (event) => {
         if (event.requestType === 'eventCreate' && isTreeItemDropped) {
+            const newEvent = event.data[0];
             let treeViewData = treeObj.current.fields.dataSource;
+
+
+            const currentEvents = scheduleObj.current.getEvents();
+            console.log("On Action Begin:", currentEvents);
             const filteredPeople = treeViewData.filter((item) => item.Id !== parseInt(draggedItemId, 10));
             treeObj.current.fields.dataSource = filteredPeople;
-            let elements = document.querySelectorAll('.e-drag-item.treeview-external-drag');
-            for (let i = 0; i < elements.length; i++) {
+            
+            const overlappingEvents = currentEvents.filter( existingEvent  => {
+              return (newEvent.StartTime < existingEvent.EndTime && newEvent.EndTime > existingEvent.StartTime) &&
+              (newEvent.EmployeeId === existingEvent.EmployeeId) && 
+              (newEvent.DepartmentID === existingEvent.DepartmentID); 
+            });
+
+            if (overlappingEvents.length > 0) {
+              alert("Employee has a Task another Department in this Time");
+              event.cancel = true;  
+            } else {
+              let elements = document.querySelectorAll('.e-drag-item.treeview-external-drag');
+              for (let i = 0; i < elements.length; i++) {
                 remove(elements[i]);
-            }
-        }
+              }
+        }}
     };
 
     const onTreeDragStop = (event) => {
@@ -241,7 +269,6 @@ const ExternalDragDrop = () => {
             event.cancel = true;
             let scheduleElement = closest(event.target, '.e-content-wrap');
             if (scheduleElement) {
-
                 let treeviewData = treeObj.current.fields.dataSource;
                 if (event.target.classList.contains('e-work-cells')) {
                     const filteredData = treeviewData.filter((item) => item.employee_id === parseInt(event.draggedNodeData.id, 10));
@@ -279,7 +306,6 @@ const ExternalDragDrop = () => {
             <div className="title-container">
               <h1 className="title-text">Doctor Appointments</h1>
             </div>
-            
             <ScheduleComponent 
             ref={scheduleObj} 
             cssClass='schedule-drag-drop' 
@@ -312,7 +338,6 @@ const ExternalDragDrop = () => {
                 idField='Id' 
                 colorField='Color'/>
               </ResourcesDirective>
-
               <ViewsDirective>
                 <ViewDirective option='TimelineDay'/>
                 <ViewDirective option='TimelineMonth'/>
