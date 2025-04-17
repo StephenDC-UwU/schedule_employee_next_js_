@@ -7,5 +7,12 @@
 @import '../../node_modules/@syncfusion/ej2-popups/styles/material.css';
 @import '../../node_modules/@syncfusion/ej2-splitbuttons/styles/material.css';
 @import "../../node_modules/@syncfusion/ej2-react-grids/styles/material.css";
-
-
+@import "../../node_modules/@syncfusion/ej2-react-schedule/styles/material.css";
+@import "../../node_modules/tailwindcss/index.css";
+@import "../../node_modules/tailwindcss/preflight.css";
+@import "../../node_modules/tailwindcss/theme.css";
+@import "../../node_modules/tailwindcss/utilities.css";
+/* @tailwind base;
+@tailwind components;
+@tailwind utilities;
+ */

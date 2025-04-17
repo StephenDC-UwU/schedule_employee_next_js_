@@ -1,11 +1,13 @@
 'use client'
 import * as React from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import { ScheduleComponent, ResourcesDirective, ResourceDirective, ViewsDirective, ViewDirective, Inject, TimelineViews, Resize, DragAndDrop, TimelineMonth } from '@syncfusion/ej2-react-schedule';
-import './external-drag-drop.css';
-import { extend, closest, remove, addClass } from '@syncfusion/ej2-base';
+import { closest, remove, addClass } from '@syncfusion/ej2-base';
 import { TreeViewComponent } from '@syncfusion/ej2-react-navigations';
+import { DateTimePickerComponent } from '@syncfusion/ej2-react-calendars';
+import { DropDownListComponent } from '@syncfusion/ej2-react-dropdowns';
 import dayjs from 'dayjs';
+
 
 const ExternalDragDrop = () => {
     const [employees, setEmployees] = useState([]);
@@ -92,6 +94,17 @@ const ExternalDragDrop = () => {
           console.error('Error Delete Event:', error);
         })};
 
+    
+/*     const onPopupOpen = (args) => {
+      args.data.DepartmentID = 2; // Valor por defecto si no hay otro valor
+    }; */
+
+
+    const employeeMap = useMemo(() => (
+      Object.fromEntries(employees.map(e => [e.employee_id, e.employee_name]))
+    ), [employees]);
+
+
     const onActionComplete = (args) => {
       console.log("Data inside args: ", args);     
       if (args.requestType === 'eventCreated') {
@@ -99,14 +112,12 @@ const ExternalDragDrop = () => {
         function formatToMySQL(dateString) {
           return dayjs(dateString).format('YYYY-MM-DD HH:mm:ss');
         }
-        const eventData = {
-          Name: event.Name,  
+        const eventData = { 
           StartTime: formatToMySQL(event.StartTime),  
           EndTime: formatToMySQL(event.EndTime),      
-          IsAllDay: event.IsAllDay || false,   
-          Description: event.Description || 'Description no disponible',  
+          Description: event.Description || '',  
           DepartmentID: event.DepartmentID,  
-          EmployeeId: event.EmployeeId || parseInt(draggedItemId, 10), // ← recupera si se pierde 
+          EmployeeId: event.EmployeeId || null
         };
         console.log("Array", event);
         console.log("Datos transformados", eventData);
@@ -121,8 +132,8 @@ const ExternalDragDrop = () => {
         const overlappingEvents = currentEvents.filter(existingEvent => {
           return (event.StartTime < existingEvent.EndTime && event.EndTime > existingEvent.StartTime) &&
                 (event.EmployeeId === existingEvent.EmployeeId) &&
-                (event.DepartmentID === existingEvent.DepartmentID) && 
-                (event.Id !== existingEvent.Id);
+                (event.Id !== existingEvent.Id)&&
+                (event.EmployeeId != null);
         });
         if (overlappingEvents.length > 0) {
           alert("Employee has a Task another Department in this Time");
@@ -132,13 +143,12 @@ const ExternalDragDrop = () => {
             return dayjs(dateString).format('YYYY-MM-DD HH:mm:ss');
           }
           const eventData = {
-            Name: event.Name,  
-            StartTime: formatToMySQL(event.StartTime),  
-            EndTime: formatToMySQL(event.EndTime),      
-            IsAllDay: event.IsAllDay || false,   
-            Description: event.Description || 'Description no disponible',  
-            DepartmentID: event.DepartmentID,
-            Id: event.Id,
+          StartTime: formatToMySQL(event.StartTime),  
+          EndTime: formatToMySQL(event.EndTime),      
+          Description: event.Description || '',  
+          DepartmentID: event.DepartmentID,  
+          EmployeeId: event.EmployeeId || null,
+          Id: event.Id
           };
           console.log("On Update Array", event);
           console.log("On Update Datos transformados", eventData);
@@ -154,7 +164,6 @@ const ExternalDragDrop = () => {
       }
     };
   
-    // const fields = { dataSource: dataSource.waitingList, id: 'Id', text: 'Name' };
 
     const fields = {
       dataSource : employees, 
@@ -167,18 +176,33 @@ const ExternalDragDrop = () => {
     let draggedItemId = '';
     const allowDragAndDrops = true;
 
+/*     const employeeMap = Object.fromEntries(
+      employees.map(e => [e.employee_id, e.employee_name])
+    );
 
     const dataRegisters = dateRegisters.map( item => ({
       Id: item.id,
-      Name: item.subject,
       StartTime: item.start_time,
       EndTime: item.end_time,
       Description: item.description,
-      IsAllDay: item.IsAllDay,
+      EmployeeId: item.employee_id,
       DepartmentID: item.work_id,
+      Subject: employeeMap[item.employee_id] || "Not Name"
     }))
+ */
 
-    const data = extend([], dataRegisters, null, true);
+    const dataRegisters = useMemo(() => (
+      dateRegisters.map(item => ({
+        Id: item.id,
+        StartTime: item.start_time,
+        EndTime: item.end_time,
+        Description: item.description,
+        EmployeeId: item.employee_id,
+        DepartmentID: item.work_id,
+        Subject: employeeMap[item.employee_id] || "Not Name"
+      }))
+    ), [dateRegisters, employeeMap]);
+
 
     const departmentData = workSpaces.map(workSpace => ({
       Text: workSpace.workspace_name,
@@ -234,8 +258,14 @@ const ExternalDragDrop = () => {
     const onActionBegin = (event) => {
         if (event.requestType === 'eventCreate' && isTreeItemDropped) {
             const newEvent = event.data[0];
+            
             let treeViewData = treeObj.current.fields.dataSource;
+            const employeeName = employees.find(e => e.employee_id === newEvent.EmployeeId)?.employee_name || 'Not Name';
 
+            // Inyectamos el Subject directamente
+            newEvent.Subject = employeeName;
+
+            console.log("Creando un nuevo evento" , newEvent);
 
             const currentEvents = scheduleObj.current.getEvents();
             console.log("On Action Begin:", currentEvents);
@@ -244,8 +274,7 @@ const ExternalDragDrop = () => {
             
             const overlappingEvents = currentEvents.filter( existingEvent  => {
               return (newEvent.StartTime < existingEvent.EndTime && newEvent.EndTime > existingEvent.StartTime) &&
-              (newEvent.EmployeeId === existingEvent.EmployeeId) && 
-              (newEvent.DepartmentID === existingEvent.DepartmentID); 
+              (newEvent.EmployeeId === existingEvent.EmployeeId) 
             });
 
             if (overlappingEvents.length > 0) {
@@ -275,13 +304,11 @@ const ExternalDragDrop = () => {
                     let cellData = scheduleObj.current.getCellDetails(event.target);
                     let resourceDetails = scheduleObj.current.getResourcesByIndex(cellData.groupIndex);
                     let eventData = {
-                        Name: filteredData[0].employee_name,
                         StartTime: cellData.startTime,
                         EndTime: cellData.endTime,
-                        IsAllDay: cellData.isAllDay,
-                        Description: filteredData[0]?.Description || 'Descripción no disponible', 
+                        Description: filteredData[0]?.Description || "", 
                         DepartmentID: resourceDetails.resourceData.Id,
-                        EmployeeId : filteredData[0].employee_id
+                        EmployeeId : filteredData[0].employee_id 
                     };
                     scheduleObj.current.openEditor(eventData, 'Add', true);
                     isTreeItemDropped = true;
@@ -297,6 +324,92 @@ const ExternalDragDrop = () => {
         document.body.classList.add('e-disble-not-allowed');
     };
 
+    const editorTemplate = (props) => {
+      console.log("Props recibidos:", props);
+      return (
+        <table className="custom-event-editor" style={{ width: '100%' }} cellPadding={5}>
+        <tbody>
+
+          <tr>
+            <td className="e-textlabel">Department</td>
+            <td colSpan={4}>
+              <DropDownListComponent 
+                id="DepartmentID" 
+                placeholder='Select Department' 
+                data-name='DepartmentID' 
+                className="e-field"
+                style={{ width: '100%' }} 
+                dataSource={workSpaces}
+                fields={{text:'workspace_name', value:'workspace_id'}}
+              />
+            </td>
+          </tr>
+
+          <tr>
+            <td className="e-textlabel">Employee</td>
+            <td colSpan={4}>
+              <DropDownListComponent 
+                id="EmployeeId"
+                placeholder='Select Employee' 
+                data-name='EmployeeId' 
+                className="e-field" 
+                style={{ width: '100%' }} 
+                dataSource={employees} 
+                fields={{text: 'employee_name', value:'employee_id'}}
+              />
+            </td>
+          </tr>
+          <tr>
+            <td className="e-textlabel">From</td>
+            <td colSpan={4}>
+              <DateTimePickerComponent 
+                id="StartTime" 
+                format='dd/MM/yy hh:mm a' 
+                data-name="StartTime"
+                className="e-field" 
+              />
+            </td>
+          </tr>
+          <tr>
+            <td className="e-textlabel">To</td>
+            <td colSpan={4}>
+              <DateTimePickerComponent 
+                id="EndTime" 
+                format='dd/MM/yy hh:mm a' 
+                data-name="EndTime" 
+                className="e-field"
+              />
+            </td>
+          </tr>
+          <tr>
+            <td className="e-textlabel">Description</td>
+            <td colSpan={4}>
+              <textarea 
+                id="Description" 
+                className="e-field e-input" 
+                name="Description" 
+                rows={3} 
+                cols={50} 
+                style={{ width: '100%', height: '60px', resize: 'vertical' }} 
+              />
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      );
+    };
+
+    function ColorContainers() {
+      return (
+        <div>
+          <div className="bg-red-500 p-4 mb-2 text-white">Rojo</div>
+          <div className="bg-green-500 p-4 mb-2 text-white">Verde</div>
+          <div className="bg-blue-500 p-4 mb-2 text-white">Azul</div>
+          <div className="bg-yellow-500 p-4 mb-2 text-black">Amarillo</div>
+          <div className="bg-purple-500 p-4 mb-2 text-white">Púrpura</div>
+        </div>
+      );
+    }
     
     return (
     <div className='schedule-control-section'>
@@ -304,7 +417,7 @@ const ExternalDragDrop = () => {
         <div className='control-wrapper drag-sample-wrapper'>
           <div className="schedule-container">
             <div className="title-container">
-              <h1 className="title-text">Doctor Appointments</h1>
+              <h1 className="title-text text-2xl font-semibold">Schedule <span className='test-color'>Employee </span> </h1>
             </div>
             <ScheduleComponent 
             ref={scheduleObj} 
@@ -315,15 +428,12 @@ const ExternalDragDrop = () => {
             currentView='TimelineDay' 
             resourceHeaderTemplate={resourceHeaderTemplate} 
             eventSettings={{ 
-              dataSource: data,
-              fields: { subject: 
-                { title: 'Patient Name', name: 'Name' }, 
-                startTime: { title: "From", name: "StartTime" }, 
-                endTime: { title: "To", name: "EndTime" }, 
-                description: { title: 'Description', name: 'Description'}
-              }}} 
-              group={{ 
-                resources: ['Departments']}} 
+              dataSource: dataRegisters,
+            }}
+            editorTemplate={editorTemplate} 
+            group={{ 
+                resources: ['Departments']}}
+/*             popupOpen={onPopupOpen} */
             actionBegin={onActionBegin}
             actionComplete={onActionComplete}
             >
