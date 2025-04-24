@@ -11,8 +11,10 @@ import { ButtonComponent } from '@syncfusion/ej2-react-buttons';
 import { PropertyPane } from './property-pane';
 import dayjs from 'dayjs';
 import IAForm from './inputIAForm'
+import { change } from '@syncfusion/ej2-react-grids';
 
 export default function ExternalDragDrop({employees, workSpaces, dateRegisters}) {
+    
     const router = useRouter();
     const [loading, setLoading] = useState(false);
 
@@ -21,6 +23,8 @@ export default function ExternalDragDrop({employees, workSpaces, dateRegisters})
     let isTreeItemDropped = false;
     let draggedItemId = '';
     const allowDragAndDrops = true;
+
+
 
     // POST: Create a new Event
     const handleCreateEvent = (newEvent) => {
@@ -207,6 +211,41 @@ export default function ExternalDragDrop({employees, workSpaces, dateRegisters})
     DepartmentID: item.work_id,
     Subject: employeeMap[item.employee_id] || "Not Name"
     }));
+
+
+    // Data Filter
+    const [filters, setFilters] = useState({ departmentId: null, employeeId: null, startTime:null, endTime:null});
+    const [filteredEvents, setFilteredEvents] = useState(dataRegisters);
+
+    
+    //handler Filters
+    const handleFilterSearch = () => {
+      let filtered = dataRegisters;
+      if (filters.departmentId) {
+        filtered = filtered.filter(ev => ev.DepartmentID === filters.departmentId);
+      }
+      if (filters.employeeId) {
+        filtered = filtered.filter(ev => ev.EmployeeId === filters.employeeId);
+      }
+      /* filters date*/
+      if(filters.startTime) {
+        filtered = filtered.filter(ev => new Date(ev.StartTime) > filters.startTime);
+      }  
+
+      if(filters.endTime) {
+        filtered = filtered.filter(ev => new Date(ev.EndTime) < filters.endTime);
+      }
+      
+      setFilteredEvents(filtered);
+      console.log(filteredEvents)
+    };
+
+    //Clean Filters
+
+    const handleFilterClear = () => {
+      setFilters({ departmentId: null, employeeId: null });
+      setFilteredEvents(dataRegisters);
+    };
 
 
     const departmentData = workSpaces.map(workSpace => ({
@@ -406,7 +445,7 @@ export default function ExternalDragDrop({employees, workSpaces, dateRegisters})
     <div className='schedule-control-section'>
       <div className='col-lg-12 control-section'>
         <div className='control-wrapper drag-sample-wrapper'>
-          <div className="schedule-container">
+          <div className="schedule-container !ml-5">
             <div className="!title-container">
               <h1 className="!title-text !text-2xl !font-semibold">Schedule <span className='text-green-700'>Employee </span> </h1>
             </div>
@@ -418,7 +457,7 @@ export default function ExternalDragDrop({employees, workSpaces, dateRegisters})
             currentView='TimelineDay' 
             resourceHeaderTemplate={resourceHeaderTemplate} 
             eventSettings={{ 
-              dataSource: dataRegisters,
+              dataSource: filteredEvents,
             }}
             editorTemplate={editorTemplate} 
             group={{ 
@@ -478,10 +517,11 @@ export default function ExternalDragDrop({employees, workSpaces, dateRegisters})
                           id="DepartmentID" 
                           placeholder='Select Department' 
                           data-name='DepartmentID' 
-                          className="e-field"
+                          className="!e-field"
                           style={{ width: '100%' }} 
                           dataSource={workSpaces}
                           fields={{text:'workspace_name', value:'workspace_id'}}
+                          change={(e)=> setFilters(prev =>({...prev, departmentId: e.value}))}
                         />
                       </td>
                     </tr>
@@ -493,29 +533,46 @@ export default function ExternalDragDrop({employees, workSpaces, dateRegisters})
                           id="EmployeeId"
                           placeholder='Select Employee' 
                           data-name='EmployeeId' 
-                          className="e-field" 
+                          className="!e-field" 
                           style={{ width: '100%' }} 
                           dataSource={employees} 
                           fields={{text: 'employee_name', value:'employee_id'}}
+                          change={(e)=> setFilters(prev =>({...prev, employeeId: e.value}))}
                         />
                       </td>
                     </tr>
-{/*                     <tr className="!row" style={{ height: '45px' }}>
+                    <tr className="!row" style={{ height: '45px' }}>
                       <td className="!property-panel-content" colSpan={2}>
-                        <DatePickerComponent className="!search-field !e-start-time" value={null} data-name="StartTime" showClearButton={false} placeholder="Start Time"></DatePickerComponent>
+                        <DatePickerComponent 
+                        className="!search-field !e-start-time" 
+                        value={filters.startTime} 
+                        data-name="StartTime" 
+                        showClearButton={false} 
+                        placeholder="Start Time"
+                        change={(e)=> setFilters(prev =>({...prev, startTime: e.value}))}
+                        >  
+                        </DatePickerComponent>
                       </td>
                     </tr>
                     <tr className="!row" style={{ height: '45px' }}>
                       <td className="!property-panel-content" colSpan={2}>
-                        <DatePickerComponent className="!search-field !e-end-time" value={null} data-name="EndTime" showClearButton={false} placeholder="End Time"></DatePickerComponent>
+                        <DatePickerComponent 
+                        className="!search-field !e-end-time" 
+                        value={filters.endTime} 
+                        data-name="EndTime" 
+                        showClearButton={false} 
+                        placeholder="End Time"
+                        change={(e)=> setFilters(prev =>({...prev, endTime: e.value}))}
+                        >
+                        </DatePickerComponent>
                       </td>
-                    </tr> */}
+                    </tr>
                     <tr className="!row" style={{ height: '45px' }}>
                       <td className="!e-field !button-customization" style={{ width: '50%', padding: '15px' }}>
-                        <ButtonComponent title='Search' type='button'>Search</ButtonComponent>
+                        <ButtonComponent title='Search' type='button'  onClick={handleFilterSearch} >Search</ButtonComponent>
                       </td>
                       <td className="!e-field !button-customization" style={{ width: '50%', padding: '15px' }}>
-                        <ButtonComponent title='Clear' type='button'>Clear</ButtonComponent>
+                        <ButtonComponent title='Clear' type='button' onClick={handleFilterClear} >Clear</ButtonComponent>
                       </td>
                     </tr>
                   </tbody>
