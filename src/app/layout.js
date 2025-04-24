@@ -1,22 +1,12 @@
-import { Geist, Geist_Mono, Roboto, Roboto_Mono } from "next/font/google";
-//import "@syncfusion/ej2-react-schedule/styles/material.css";
-import "./globals.css";
+import { Roboto, Roboto_Mono } from "next/font/google";
 import './external-drag-drop.css';
+import "./globals.css";
 
-/* const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-}); */
 
 const roboto = Roboto({
   variable: "--font-roboto",
   subsets: ["latin"],
-  weight: ["400", "700"], // puedes especificar pesos si quieres
+  weight: ["400", "700"], 
 });
 
 const robotoMono = Roboto_Mono({

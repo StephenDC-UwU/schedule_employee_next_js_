@@ -8,7 +8,6 @@
     "start": "next start",
     "lint": "next lint",
     "tailwind:init": "tailwindcss init -p"
-    
   },
   "dependencies": {
     "@syncfusion/ej2-react-buttons": "^29.1.34",

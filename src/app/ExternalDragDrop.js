@@ -1,15 +1,21 @@
 'use client'
 import * as React from 'react';
-import { useRef } from 'react';
+import { useRef,useState  } from 'react';
+import { useRouter } from 'next/navigation';  
 import { ScheduleComponent, ResourcesDirective, ResourceDirective, ViewsDirective, ViewDirective, Inject, TimelineViews, Resize, DragAndDrop, TimelineMonth } from '@syncfusion/ej2-react-schedule';
 import { closest, remove, addClass } from '@syncfusion/ej2-base';
 import { TreeViewComponent } from '@syncfusion/ej2-react-navigations';
-import { DateTimePickerComponent } from '@syncfusion/ej2-react-calendars';
+import { DateTimePickerComponent, DatePickerComponent } from '@syncfusion/ej2-react-calendars';
 import { DropDownListComponent } from '@syncfusion/ej2-react-dropdowns';
+import { ButtonComponent } from '@syncfusion/ej2-react-buttons';
+import { PropertyPane } from './property-pane';
 import dayjs from 'dayjs';
-
+import IAForm from './inputIAForm'
 
 export default function ExternalDragDrop({employees, workSpaces, dateRegisters}) {
+    const router = useRouter();
+    const [loading, setLoading] = useState(false);
+
     const treeObj = useRef(null);
     let scheduleObj = useRef(null);
     let isTreeItemDropped = false;
@@ -35,7 +41,11 @@ export default function ExternalDragDrop({employees, workSpaces, dateRegisters})
       })
       .catch((error) => {
         console.error('Error Create Event:', error);
-      })};
+      })
+      .finally(()=>{
+
+      })
+    };
 
     // Update: Update an Event
     const handleUpdateEvent = (updateEvent) => {
@@ -57,7 +67,11 @@ export default function ExternalDragDrop({employees, workSpaces, dateRegisters})
       })
       .catch((error) => {
         console.error('Error Update Event:', error);
-      })};
+      })
+      .finally(()=>{
+
+      })
+    };
 
       // Delete: Delete an Event
       const handleDeleteEvent = (id) => {
@@ -77,9 +91,39 @@ export default function ExternalDragDrop({employees, workSpaces, dateRegisters})
         })
         .catch((error) => {
           console.error('Error Delete Event:', error);
-        })};
+        })
+        .finally(()=>{
 
+        })
+      };
 
+      // Call to IA
+      const handleScheduleSubmit = (message) => {
+        setLoading(true);
+        console.log("Text Sent:", message);
+        fetch('http://localhost:5000/api/schedule/text', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ message: message }),
+        })
+        .then(async (response) => {
+          const text = await response.text();
+          console.log('Response from Server:', text);
+          return JSON.parse(text);
+        })
+        .then((data) => {
+          console.log('Create Schedule by IA:', data);
+        })
+        .catch((error) => {
+          console.error('Error Schedule Event:', error);
+        })
+        .finally(() => {
+          setLoading(false);
+          router.refresh();
+        });
+      };
 
     const onActionComplete = (args) => {
       console.log("Data inside args: ", args);     
@@ -358,21 +402,19 @@ export default function ExternalDragDrop({employees, workSpaces, dateRegisters})
       </table>
       );
     };
-    
     return (
     <div className='schedule-control-section'>
       <div className='col-lg-12 control-section'>
         <div className='control-wrapper drag-sample-wrapper'>
           <div className="schedule-container">
-            <div className="title-container">
-              <h1 className="title-text text-2xl font-semibold">Schedule <span className='test-color'>Employee </span> </h1>
+            <div className="!title-container">
+              <h1 className="!title-text !text-2xl !font-semibold">Schedule <span className='text-green-700'>Employee </span> </h1>
             </div>
             <ScheduleComponent 
             ref={scheduleObj} 
-            cssClass='schedule-drag-drop' 
             width='100%' 
             height='650px' 
-            selectedDate={new Date(2025, 3, 4)} 
+            selectedDate={new Date()} 
             currentView='TimelineDay' 
             resourceHeaderTemplate={resourceHeaderTemplate} 
             eventSettings={{ 
@@ -401,15 +443,16 @@ export default function ExternalDragDrop({employees, workSpaces, dateRegisters})
               </ViewsDirective>
               <Inject services={[TimelineViews, TimelineMonth, Resize, DragAndDrop]}/>
             </ScheduleComponent>
-
           </div>
-          <div className="treeview-container">
-            <div className="title-container">
-              <h1 className="title-text">Waiting List</h1>
+          
+          <div className="treeview-container !mx-5 !mb-4" >
+            <div className="!title-container">
+              <h1 className="!title-text">Waiting List</h1>
             </div>
-            <TreeViewComponent 
+            <TreeViewComponent
               ref={treeObj} 
               cssClass='treeview-external-drag'
+              className='!mb-4'
               dragArea=".drag-sample-wrapper" 
               nodeTemplate={treeTemplate} 
               fields={fields} 
@@ -419,7 +462,73 @@ export default function ExternalDragDrop({employees, workSpaces, dateRegisters})
               nodeDragStart={onTreeDragStart} 
               allowDragAndDrop={allowDragAndDrops}
             />
+
+            <PropertyPane title='Search By Events Fields' className='!mt-4'>
+            {/* <input className="!e-input" type="text" placeholder="Enter the Search text" onKeyUp={globalSearch.bind(this)}/> */}
+
+              <form className="!event-search" id="form-search">
+                <p className="!property-panel-header !header-customization" style={{ width: '100%', padding: '22px 0 0 0' }}>Search by specific event fields</p>
+                <table id="property-specific" style={{ width: '100%' }}>
+                  <tbody>
+                    
+                    <tr className="!row" style={{ height: '45px' }}>
+                      <td className="!property-panel-content" colSpan={2}>
+                        {/* <input type="text" className="!e-input !search-field" id="searchEventsDepartment" data-name="Subject" placeholder="Departments"/> */}
+                        <DropDownListComponent 
+                          id="DepartmentID" 
+                          placeholder='Select Department' 
+                          data-name='DepartmentID' 
+                          className="e-field"
+                          style={{ width: '100%' }} 
+                          dataSource={workSpaces}
+                          fields={{text:'workspace_name', value:'workspace_id'}}
+                        />
+                      </td>
+                    </tr>
+
+                    <tr className="!row" style={{ height: '45px' }}>
+                      <td className="!property-panel-content" colSpan={2}>
+                        {/* <input type="text" className="!e-input !search-field" id="searchEventsEmployee" data-name="Location" placeholder="Employees"/> */}
+                        <DropDownListComponent 
+                          id="EmployeeId"
+                          placeholder='Select Employee' 
+                          data-name='EmployeeId' 
+                          className="e-field" 
+                          style={{ width: '100%' }} 
+                          dataSource={employees} 
+                          fields={{text: 'employee_name', value:'employee_id'}}
+                        />
+                      </td>
+                    </tr>
+{/*                     <tr className="!row" style={{ height: '45px' }}>
+                      <td className="!property-panel-content" colSpan={2}>
+                        <DatePickerComponent className="!search-field !e-start-time" value={null} data-name="StartTime" showClearButton={false} placeholder="Start Time"></DatePickerComponent>
+                      </td>
+                    </tr>
+                    <tr className="!row" style={{ height: '45px' }}>
+                      <td className="!property-panel-content" colSpan={2}>
+                        <DatePickerComponent className="!search-field !e-end-time" value={null} data-name="EndTime" showClearButton={false} placeholder="End Time"></DatePickerComponent>
+                      </td>
+                    </tr> */}
+                    <tr className="!row" style={{ height: '45px' }}>
+                      <td className="!e-field !button-customization" style={{ width: '50%', padding: '15px' }}>
+                        <ButtonComponent title='Search' type='button'>Search</ButtonComponent>
+                      </td>
+                      <td className="!e-field !button-customization" style={{ width: '50%', padding: '15px' }}>
+                        <ButtonComponent title='Clear' type='button'>Clear</ButtonComponent>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+
+              </form>
+            </PropertyPane>
           </div>
+
+
+        </div>
+        <div className="!flex !justify-center !my-6">
+          <IAForm loading={loading} onSubmit={handleScheduleSubmit} />
         </div>
       </div>
     </div>
