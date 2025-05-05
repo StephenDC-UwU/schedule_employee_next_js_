@@ -106,11 +106,11 @@
 }
 
 .e-schedule.schedule-drag-drop .e-resource-cells.e-parent-node .specialist-category {
-    padding-left: 30px
+    padding-left: 30px;
 }
 
 .e-schedule.e-rtl.schedule-drag-drop .e-resource-cells.e-parent-node .specialist-category {
-    padding-right: 30px
+    padding-right: 30px;
 }
 
 .e-schedule.schedule-drag-drop .e-resource-cells.e-child-node .specialist-category, .e-schedule.schedule-drag-drop .e-resource-cells.e-child-node .specialist-name {
@@ -122,8 +122,10 @@
 }
 
 .e-schedule.schedule-drag-drop .e-resource-cells .specialist-name {
-    font-size: 13px;
+    font-size: 12px;
 }
+
+
 
 .e-schedule.schedule-drag-drop .e-resource-cells .specialist-designation {
     font-size: 10px;
@@ -131,7 +133,7 @@
 
 .e-schedule.schedule-drag-drop .specialist-image {
     width: 10px;
-    height: 40px;
+    height: 20px;
     float: left;
     border-radius: 50%;
     margin-right: 10px;
@@ -216,5 +218,5 @@ color: #777;
   }
 
   body{
-    background-color: #9db9ff;
+    background-color: #90abf7;
   }

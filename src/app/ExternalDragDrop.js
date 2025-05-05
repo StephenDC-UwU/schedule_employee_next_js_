@@ -1,17 +1,16 @@
 'use client'
 import * as React from 'react';
-import { useRef,useState  } from 'react';
+import { useRef,useState,useCallback  } from 'react';
 import { useRouter } from 'next/navigation';  
 import { ScheduleComponent, ResourcesDirective, ResourceDirective, ViewsDirective, ViewDirective, Inject, TimelineViews, Resize, DragAndDrop, TimelineMonth } from '@syncfusion/ej2-react-schedule';
 import { closest, remove, addClass } from '@syncfusion/ej2-base';
 import { TreeViewComponent } from '@syncfusion/ej2-react-navigations';
 import { DateTimePickerComponent, DatePickerComponent } from '@syncfusion/ej2-react-calendars';
-import { DropDownListComponent } from '@syncfusion/ej2-react-dropdowns';
+import { DropDownListComponent,MultiSelectComponent, FilteringEventArgs } from '@syncfusion/ej2-react-dropdowns';
 import { ButtonComponent } from '@syncfusion/ej2-react-buttons';
 import { PropertyPane } from './property-pane';
 import dayjs from 'dayjs';
 import IAForm from './inputIAForm'
-import { change } from '@syncfusion/ej2-react-grids';
 
 export default function ExternalDragDrop({employees, workSpaces, dateRegisters}) {
     
@@ -23,8 +22,6 @@ export default function ExternalDragDrop({employees, workSpaces, dateRegisters})
     let isTreeItemDropped = false;
     let draggedItemId = '';
     const allowDragAndDrops = true;
-
-
 
     // POST: Create a new Event
     const handleCreateEvent = (newEvent) => {
@@ -213,38 +210,40 @@ export default function ExternalDragDrop({employees, workSpaces, dateRegisters})
     }));
 
 
+
     // Data Filter
-    const [filters, setFilters] = useState({ departmentId: null, employeeId: null, startTime:null, endTime:null});
+    const [filters, setFilters] = useState({ departmentsId: [], employeesId: [], startTime:null, endTime:null});
     const [filteredEvents, setFilteredEvents] = useState(dataRegisters);
 
     
     //handler Filters
     const handleFilterSearch = () => {
       let filtered = dataRegisters;
-      if (filters.departmentId) {
-        filtered = filtered.filter(ev => ev.DepartmentID === filters.departmentId);
+      if (filters.departmentsId &&  filters.departmentsId.length > 0) {
+        filtered = filtered.filter( ev => filters.departmentsId.includes(ev.DepartmentID));
       }
-      if (filters.employeeId) {
-        filtered = filtered.filter(ev => ev.EmployeeId === filters.employeeId);
+      if (filters.employeesId && filters.employeesId.length > 0 ) {
+        filtered = filtered.filter(ev => filters.employeesId.includes(ev.EmployeeId));
       }
       /* filters date*/
       if(filters.startTime) {
         filtered = filtered.filter(ev => new Date(ev.StartTime) > filters.startTime);
       }  
-
       if(filters.endTime) {
         filtered = filtered.filter(ev => new Date(ev.EndTime) < filters.endTime);
       }
-      
       setFilteredEvents(filtered);
-      console.log(filteredEvents)
+      console.log("Events filtered", filtered);
     };
+
+
+
 
     //Clean Filters
 
     const handleFilterClear = () => {
-      setFilters({ departmentId: null, employeeId: null });
       setFilteredEvents(dataRegisters);
+      setFilters({ departmentId: null, employeeId: null, startTime:null, endTime:null});
     };
 
 
@@ -257,18 +256,11 @@ export default function ExternalDragDrop({employees, workSpaces, dateRegisters})
     const getConsultantName = (value) => {
         return value.resourceData[value.resource.textField];
     };
-    const getConsultantImage = (value) => {
-        return getConsultantName(value).toLowerCase();
-    };
-    const getConsultantDesignation = (value) => {
-        return value.resourceData.Designation;
-    };
+
     const resourceHeaderTemplate = (props) => {
-        return (<div className="template-wrap">
+        return (<div className="template-wrap ">
         <div className="specialist-category">
-          <div className={"specialist-image " + getConsultantImage(props)}></div>
           <div className="specialist-name"> {getConsultantName(props)}</div>
-          <div className="specialist-designation">{getConsultantDesignation(props)}</div>
         </div>
       </div>);
     };
@@ -506,14 +498,15 @@ export default function ExternalDragDrop({employees, workSpaces, dateRegisters})
             {/* <input className="!e-input" type="text" placeholder="Enter the Search text" onKeyUp={globalSearch.bind(this)}/> */}
 
               <form className="!event-search" id="form-search">
-                <p className="!property-panel-header !header-customization" style={{ width: '100%', padding: '22px 0 0 0' }}>Search by specific event fields</p>
+{/*                 <p className="!property-panel-header !header-customization" style={{ width: '100%', padding: '22px 0 0 0' }}>Search by specific event fields</p> */}
+                
                 <table id="property-specific" style={{ width: '100%' }}>
                   <tbody>
                     
                     <tr className="!row" style={{ height: '45px' }}>
                       <td className="!property-panel-content" colSpan={2}>
-                        {/* <input type="text" className="!e-input !search-field" id="searchEventsDepartment" data-name="Subject" placeholder="Departments"/> */}
-                        <DropDownListComponent 
+                        {/* <DropDownListComponent
+                          key={filters.departmentId || 'department'} 
                           id="DepartmentID" 
                           placeholder='Select Department' 
                           data-name='DepartmentID' 
@@ -521,15 +514,17 @@ export default function ExternalDragDrop({employees, workSpaces, dateRegisters})
                           style={{ width: '100%' }} 
                           dataSource={workSpaces}
                           fields={{text:'workspace_name', value:'workspace_id'}}
+                          value={filters.departmentId}
                           change={(e)=> setFilters(prev =>({...prev, departmentId: e.value}))}
-                        />
+                        /> */}
+                         <MultiSelectComponent  /* key={filters.departmentsId || 'department'}  */  value={filters.departmentsId}  id="comboelement" dataSource={workSpaces} allowFiltering={true} change={(e)=> setFilters(prev =>({...prev, departmentsId: e.value}))} fields={{text:'workspace_name', value:'workspace_id'}} placeholder="Select Work Spaces" />
                       </td>
                     </tr>
 
                     <tr className="!row" style={{ height: '45px' }}>
                       <td className="!property-panel-content" colSpan={2}>
-                        {/* <input type="text" className="!e-input !search-field" id="searchEventsEmployee" data-name="Location" placeholder="Employees"/> */}
-                        <DropDownListComponent 
+                        {/* <DropDownListComponent
+                          key={filters.employeeId || 'employee'} 
                           id="EmployeeId"
                           placeholder='Select Employee' 
                           data-name='EmployeeId' 
@@ -537,14 +532,17 @@ export default function ExternalDragDrop({employees, workSpaces, dateRegisters})
                           style={{ width: '100%' }} 
                           dataSource={employees} 
                           fields={{text: 'employee_name', value:'employee_id'}}
+                          value= {filters.employeeId}
                           change={(e)=> setFilters(prev =>({...prev, employeeId: e.value}))}
-                        />
+                        /> */}
+                         <MultiSelectComponent  /* key={filters.departmentsId || 'department'}  */  value={filters.employeesId}  id="comboelement" dataSource={employees} allowFiltering={true} change={(e)=> setFilters(prev =>({...prev, employeesId: e.value}))} fields={{text: 'employee_name', value:'employee_id'}} placeholder="Select Employee" />
                       </td>
                     </tr>
                     <tr className="!row" style={{ height: '45px' }}>
                       <td className="!property-panel-content" colSpan={2}>
                         <DatePickerComponent 
-                        className="!search-field !e-start-time" 
+                        className="!search-field !e-start-time"
+                        key={filters.startTime || 'start'} 
                         value={filters.startTime} 
                         data-name="StartTime" 
                         showClearButton={false} 
@@ -557,7 +555,8 @@ export default function ExternalDragDrop({employees, workSpaces, dateRegisters})
                     <tr className="!row" style={{ height: '45px' }}>
                       <td className="!property-panel-content" colSpan={2}>
                         <DatePickerComponent 
-                        className="!search-field !e-end-time" 
+                        className="!search-field !e-end-time"
+                        key={filters.endTime || 'end'} 
                         value={filters.endTime} 
                         data-name="EndTime" 
                         showClearButton={false} 
@@ -567,6 +566,7 @@ export default function ExternalDragDrop({employees, workSpaces, dateRegisters})
                         </DatePickerComponent>
                       </td>
                     </tr>
+
                     <tr className="!row" style={{ height: '45px' }}>
                       <td className="!e-field !button-customization" style={{ width: '50%', padding: '15px' }}>
                         <ButtonComponent title='Search' type='button'  onClick={handleFilterSearch} >Search</ButtonComponent>
@@ -575,10 +575,12 @@ export default function ExternalDragDrop({employees, workSpaces, dateRegisters})
                         <ButtonComponent title='Clear' type='button' onClick={handleFilterClear} >Clear</ButtonComponent>
                       </td>
                     </tr>
+
+                    
                   </tbody>
                 </table>
-
               </form>
+              
             </PropertyPane>
           </div>
 
