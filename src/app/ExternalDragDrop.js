@@ -1,22 +1,21 @@
 'use client'
 import * as React from 'react';
-import { useRef,useState,useCallback  } from 'react';
+import { useRef,useState} from 'react';
 import { useRouter } from 'next/navigation';  
 import { ScheduleComponent, ResourcesDirective, ResourceDirective, ViewsDirective, ViewDirective, Inject, TimelineViews, Resize, DragAndDrop, TimelineMonth } from '@syncfusion/ej2-react-schedule';
 import { closest, remove, addClass } from '@syncfusion/ej2-base';
 import { TreeViewComponent } from '@syncfusion/ej2-react-navigations';
-import { DateTimePickerComponent, DatePickerComponent } from '@syncfusion/ej2-react-calendars';
-import { DropDownListComponent,MultiSelectComponent, FilteringEventArgs } from '@syncfusion/ej2-react-dropdowns';
+import { DatePickerComponent } from '@syncfusion/ej2-react-calendars';
+import { MultiSelectComponent } from '@syncfusion/ej2-react-dropdowns';
 import { ButtonComponent } from '@syncfusion/ej2-react-buttons';
-import { PropertyPane } from './property-pane';
 import dayjs from 'dayjs';
 import IAForm from './inputIAForm'
+import editorTemplate from './editorTemplate'
 
 export default function ExternalDragDrop({employees, workSpaces, dateRegisters}) {
     
     const router = useRouter();
     const [loading, setLoading] = useState(false);
-
     const treeObj = useRef(null);
     let scheduleObj = useRef(null);
     let isTreeItemDropped = false;
@@ -122,7 +121,7 @@ export default function ExternalDragDrop({employees, workSpaces, dateRegisters})
         })
         .finally(() => {
           setLoading(false);
-          router.refresh();
+          router.refresh(); 
         });
       };
 
@@ -156,6 +155,7 @@ export default function ExternalDragDrop({employees, workSpaces, dateRegisters})
                 (event.Id !== existingEvent.Id)&&
                 (event.EmployeeId != null);
         });
+
         if (overlappingEvents.length > 0) {
           alert("Employee has a Task another Department in this Time");
           args.cancel = true;  
@@ -209,23 +209,21 @@ export default function ExternalDragDrop({employees, workSpaces, dateRegisters})
     Subject: employeeMap[item.employee_id] || "Not Name"
     }));
 
-
-
     // Data Filter
-    const [filters, setFilters] = useState({ departmentsId: [], employeesId: [], startTime:null, endTime:null});
+    const [filters, setFilters] = useState({ departmentsId: null, employeesId: null, startTime:null, endTime:null});
     const [filteredEvents, setFilteredEvents] = useState(dataRegisters);
 
     
     //handler Filters
     const handleFilterSearch = () => {
       let filtered = dataRegisters;
-      if (filters.departmentsId &&  filters.departmentsId.length > 0) {
+      if (filters.departmentsId) {
         filtered = filtered.filter( ev => filters.departmentsId.includes(ev.DepartmentID));
       }
-      if (filters.employeesId && filters.employeesId.length > 0 ) {
+      if (filters.employeesId) {
         filtered = filtered.filter(ev => filters.employeesId.includes(ev.EmployeeId));
       }
-      /* filters date*/
+      // filters date
       if(filters.startTime) {
         filtered = filtered.filter(ev => new Date(ev.StartTime) > filters.startTime);
       }  
@@ -234,13 +232,9 @@ export default function ExternalDragDrop({employees, workSpaces, dateRegisters})
       }
       setFilteredEvents(filtered);
       console.log("Events filtered", filtered);
-    };
-
-
-
+    }
 
     //Clean Filters
-
     const handleFilterClear = () => {
       setFilteredEvents(dataRegisters);
       setFilters({ departmentId: null, employeeId: null, startTime:null, endTime:null});
@@ -359,87 +353,13 @@ export default function ExternalDragDrop({employees, workSpaces, dateRegisters})
         document.body.classList.add('e-disble-not-allowed');
     };
 
-    const editorTemplate = (props) => {
-      console.log("Props recibidos:", props);
-      return (
-        <table className="custom-event-editor" style={{ width: '100%' }} cellPadding={5}>
-        <tbody>
-
-          <tr>
-            <td className="e-textlabel">Department</td>
-            <td colSpan={4}>
-              <DropDownListComponent 
-                id="DepartmentID" 
-                placeholder='Select Department' 
-                data-name='DepartmentID' 
-                className="e-field"
-                style={{ width: '100%' }} 
-                dataSource={workSpaces}
-                fields={{text:'workspace_name', value:'workspace_id'}}
-              />
-            </td>
-          </tr>
-
-          <tr>
-            <td className="e-textlabel">Employee</td>
-            <td colSpan={4}>
-              <DropDownListComponent 
-                id="EmployeeId"
-                placeholder='Select Employee' 
-                data-name='EmployeeId' 
-                className="e-field" 
-                style={{ width: '100%' }} 
-                dataSource={employees} 
-                fields={{text: 'employee_name', value:'employee_id'}}
-              />
-            </td>
-          </tr>
-          <tr>
-            <td className="e-textlabel">From</td>
-            <td colSpan={4}>
-              <DateTimePickerComponent 
-                id="StartTime" 
-                format='dd/MM/yy hh:mm a' 
-                data-name="StartTime"
-                className="e-field" 
-              />
-            </td>
-          </tr>
-          <tr>
-            <td className="e-textlabel">To</td>
-            <td colSpan={4}>
-              <DateTimePickerComponent 
-                id="EndTime" 
-                format='dd/MM/yy hh:mm a' 
-                data-name="EndTime" 
-                className="e-field"
-              />
-            </td>
-          </tr>
-          <tr>
-            <td className="e-textlabel">Description</td>
-            <td colSpan={4}>
-              <textarea 
-                id="Description" 
-                className="e-field e-input" 
-                name="Description" 
-                rows={3} 
-                cols={50} 
-                style={{ width: '100%', height: '60px', resize: 'vertical' }} 
-              />
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      );
-    };
     return (
     <div className='schedule-control-section'>
       <div className='col-lg-12 control-section'>
         <div className='control-wrapper drag-sample-wrapper'>
           <div className="schedule-container !ml-5">
             <div className="!title-container">
-              <h1 className="!title-text !text-2xl !font-semibold">Schedule <span className='text-green-700'>Employee </span> </h1>
+              <h1 className="!text-3xl !font-bold">Schedule <span className='text-green-700'>Employee </span> </h1>
             </div>
             <ScheduleComponent 
             ref={scheduleObj} 
@@ -451,7 +371,7 @@ export default function ExternalDragDrop({employees, workSpaces, dateRegisters})
             eventSettings={{ 
               dataSource: filteredEvents,
             }}
-            editorTemplate={editorTemplate} 
+            editorTemplate={(props) => editorTemplate({...props,workSpaces,employees})} 
             group={{ 
                 resources: ['Departments']}}
             actionBegin={onActionBegin}
@@ -477,65 +397,53 @@ export default function ExternalDragDrop({employees, workSpaces, dateRegisters})
           </div>
           
           <div className="treeview-container !mx-5 !mb-4" >
+
             <div className="!title-container">
-              <h1 className="!title-text">Waiting List</h1>
+              <h1 className="!text-xl !font-bold">Waiting List</h1>
             </div>
-            <TreeViewComponent
-              ref={treeObj} 
-              cssClass='treeview-external-drag'
-              className='!mb-4'
-              dragArea=".drag-sample-wrapper" 
-              nodeTemplate={treeTemplate} 
-              fields={fields} 
-              nodeDragStop={onTreeDragStop} 
-              nodeSelecting={onItemSelecting} 
-              nodeDragging={onTreeDrag} 
-              nodeDragStart={onTreeDragStart} 
-              allowDragAndDrop={allowDragAndDrops}
-            />
 
-            <PropertyPane title='Search By Events Fields' className='!mt-4'>
-            {/* <input className="!e-input" type="text" placeholder="Enter the Search text" onKeyUp={globalSearch.bind(this)}/> */}
+            <div className="!h-[400px] scroll-container !overflow-y-auto !rounded-md !p-3 !shadow-sm">
+              <TreeViewComponent  
+                ref={treeObj} 
+                cssClass='treeview-external-drag'
+                className='!mb-4'
+                dragArea=".drag-sample-wrapper" 
+                nodeTemplate={treeTemplate} 
+                fields={fields} 
+                nodeDragStop={onTreeDragStop} 
+                nodeSelecting={onItemSelecting} 
+                nodeDragging={onTreeDrag} 
+                nodeDragStart={onTreeDragStart} 
+                allowDragAndDrop={allowDragAndDrops}
+              />
+            </div>
 
-              <form className="!event-search" id="form-search">
-{/*                 <p className="!property-panel-header !header-customization" style={{ width: '100%', padding: '22px 0 0 0' }}>Search by specific event fields</p> */}
-                
+              <form className="!event-search" id="form-search">                
                 <table id="property-specific" style={{ width: '100%' }}>
                   <tbody>
-                    
                     <tr className="!row" style={{ height: '45px' }}>
                       <td className="!property-panel-content" colSpan={2}>
-                        {/* <DropDownListComponent
-                          key={filters.departmentId || 'department'} 
-                          id="DepartmentID" 
-                          placeholder='Select Department' 
-                          data-name='DepartmentID' 
-                          className="!e-field"
-                          style={{ width: '100%' }} 
-                          dataSource={workSpaces}
-                          fields={{text:'workspace_name', value:'workspace_id'}}
-                          value={filters.departmentId}
-                          change={(e)=> setFilters(prev =>({...prev, departmentId: e.value}))}
-                        /> */}
-                         <MultiSelectComponent  /* key={filters.departmentsId || 'department'}  */  value={filters.departmentsId}  id="comboelement" dataSource={workSpaces} allowFiltering={true} change={(e)=> setFilters(prev =>({...prev, departmentsId: e.value}))} fields={{text:'workspace_name', value:'workspace_id'}} placeholder="Select Work Spaces" />
+                         <MultiSelectComponent  
+                         value={filters.departmentsId}  
+                         id="comboelement" 
+                         dataSource={workSpaces} 
+                         allowFiltering={true} 
+                         fields={{text:'workspace_name', value:'workspace_id'}}
+                         change={(e)=> setFilters(prev =>({...prev, departmentsId: e.value}))}                          
+                         placeholder="Select Work Spaces" />
                       </td>
                     </tr>
 
                     <tr className="!row" style={{ height: '45px' }}>
                       <td className="!property-panel-content" colSpan={2}>
-                        {/* <DropDownListComponent
-                          key={filters.employeeId || 'employee'} 
-                          id="EmployeeId"
-                          placeholder='Select Employee' 
-                          data-name='EmployeeId' 
-                          className="!e-field" 
-                          style={{ width: '100%' }} 
-                          dataSource={employees} 
-                          fields={{text: 'employee_name', value:'employee_id'}}
-                          value= {filters.employeeId}
-                          change={(e)=> setFilters(prev =>({...prev, employeeId: e.value}))}
-                        /> */}
-                         <MultiSelectComponent  /* key={filters.departmentsId || 'department'}  */  value={filters.employeesId}  id="comboelement" dataSource={employees} allowFiltering={true} change={(e)=> setFilters(prev =>({...prev, employeesId: e.value}))} fields={{text: 'employee_name', value:'employee_id'}} placeholder="Select Employee" />
+                         <MultiSelectComponent  
+                         value={filters.employeesId}  
+                         id="comboelement" 
+                         dataSource={employees} 
+                         allowFiltering={true} 
+                         fields={{text: 'employee_name', value:'employee_id'}}
+                         change={(e)=> setFilters(prev =>({...prev, employeesId: e.value}))}  
+                         placeholder="Select Employee" />
                       </td>
                     </tr>
                     <tr className="!row" style={{ height: '45px' }}>
@@ -566,25 +474,20 @@ export default function ExternalDragDrop({employees, workSpaces, dateRegisters})
                         </DatePickerComponent>
                       </td>
                     </tr>
-
                     <tr className="!row" style={{ height: '45px' }}>
+                     <td className="!e-field !button-customization" style={{ width: '50%', padding: '15px' }}>
+                        <ButtonComponent cssClass='e-success' title='Search' type='button'  onClick={handleFilterSearch} >Search</ButtonComponent>
+                      </td> 
                       <td className="!e-field !button-customization" style={{ width: '50%', padding: '15px' }}>
-                        <ButtonComponent title='Search' type='button'  onClick={handleFilterSearch} >Search</ButtonComponent>
-                      </td>
-                      <td className="!e-field !button-customization" style={{ width: '50%', padding: '15px' }}>
-                        <ButtonComponent title='Clear' type='button' onClick={handleFilterClear} >Clear</ButtonComponent>
+                        <ButtonComponent cssClass='e-danger' title='Clear' type='button' onClick={handleFilterClear} >Clear</ButtonComponent>
                       </td>
                     </tr>
-
-                    
                   </tbody>
                 </table>
               </form>
-              
-            </PropertyPane>
+
+
           </div>
-
-
         </div>
         <div className="!flex !justify-center !my-6">
           <IAForm loading={loading} onSubmit={handleScheduleSubmit} />

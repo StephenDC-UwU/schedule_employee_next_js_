@@ -1,0 +1,256 @@
+"use client"
+
+import { useState } from "react"
+import {useRouter} from "next/navigation"
+import { Settings, X, MoreVertical, Menu, ChevronLeft } from "lucide-react"
+
+export default function EmployeeDashboard({getEmployees, getWorkspaces}) {
+
+  const router = useRouter();
+
+  const [employees, setEmployees] = useState(getEmployees)
+  const [workspaces, setWorkspaces] = useState(getWorkspaces)
+  const [selectedWorkspace, setSelectedWorkspace] = useState(0)
+  const [openDropdownIndex, setOpenDropdownIndex] = useState(null)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+
+   const handleDeleteEmployee = (id) => {
+        fetch(`http://localhost:5000/api/employees?id=${id}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type' : 'application/json',
+          },
+        })
+        .then(async (response) => {
+          const text = await response.text();
+          console.log('Response from Server:', text);
+          return JSON.parse(text); 
+        })
+        .then((data) => {
+          console.log('Employee Deleted', data);
+        })
+        .catch((error) => {
+          console.error('Error Delete Employee:', error);
+        })
+        .finally(()=>{
+
+        })
+  };
+
+  const handleDeletedEmployee = (id) => {
+    setEmployees(employees.filter((employee) => employee.id !== id))
+    handleDeleteEmployee(id);
+  }
+
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen)
+  }
+
+  /* Managment Employee */
+  const handleAddEmployee = () => {
+    router.push('/dashboard/employee');
+  };
+
+  const handleUpdateEmployee = (id) => {
+    router.push(`/dashboard/employee?id=${id}`);
+  };
+
+  const handleAddWorkspace = () => {
+    alert("Funcionalidad para agregar workspace");
+  }
+
+  const handleReturnSchedule = () => {
+    router.push('/');
+  }
+
+  return (
+    <div className="!flex !h-screen !w-full !flex-col md:!flex-row">
+
+  {/* Mobile Header */}
+  <div className="!flex !items-center !justify-between !border-b !border-gray-200 !bg-white !p-4 md:!hidden">
+    <button onClick={toggleSidebar} className="!rounded-md !p-2 hover:!bg-gray-100">
+      <Menu size={24} />
+    </button>
+    <h1 className="!text-lg !font-bold">Employee Dashboard</h1>
+    <div className="!w-8"></div>
+  </div>
+
+  {/* Left Sidebar */}
+  <div
+  className={`${
+    sidebarOpen ? "!translate-x-0" : "!-translate-x-full"
+  } !z-40 !bg-white !transition-transform !duration-300 !ease-in-out md:!relative md:!z-0 md:!translate-x-0 md:!transform-none md:!w-64 md:!border-r md:!border-gray-200 ${
+    sidebarOpen ? "!fixed !inset-0" : "!fixed !inset-0 md:!static"
+  }`}
+  >
+    <div className="!flex !items-center !justify-between !border-b !border-gray-200 !p-4 md:!hidden">
+      <h2 className="!font-bold">Menu</h2>
+      <button onClick={toggleSidebar} className="!rounded-md !p-2 hover:!bg-gray-100">
+        <ChevronLeft size={24} />
+      </button>
+    </div>
+
+    <div className="!p-4">
+
+      <button 
+      onClick={() => handleReturnSchedule()}
+      className="!mb-6 !w-full !rounded-md !bg-yellow-300 !py-3 !px-4 !font-medium !text-gray-800 hover:!bg-yellow-400">
+        Schedule Employee
+      </button>
+      {workspaces.map((workspace, index) => (
+        <div key={workspace.workspace_id} className="!relative !mb-3">
+          <div
+            className={`!flex !items-center !justify-between !rounded-full !border !border-gray-300 !px-4 !py-2 transition-colors duration-200 ${
+              selectedWorkspace === index ? "!bg-opacity-20" : ""
+            }`}
+            style={{
+              backgroundColor: selectedWorkspace === index ? workspace.color : "transparent",
+            }}
+          >
+            {/* Click aquí selecciona el workspace */}
+            <div
+              className="!flex !items-center gap-2 !cursor-pointer"
+              onClick={() => setSelectedWorkspace(index)}
+            >
+              <span
+                className="!inline-block !h-3 !w-3 !rounded-full"
+                style={{ backgroundColor: workspace.color }}
+              />
+              <span className="!text-gray-700">{workspace.workspace_name}</span>
+            </div>
+
+            {/* Click aquí abre/cierra el dropdown */}
+            <MoreVertical
+              size={18}
+              className="!text-gray-500 !cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation(); // evita que se dispare también el otro click
+                setOpenDropdownIndex(openDropdownIndex === index ? null : index);
+              }}
+            />
+          </div>
+
+          {openDropdownIndex === index && (
+            <div className="!absolute !right-0 !mt-1 !w-48 !rounded-md !border !border-gray-200 !bg-white !py-1 !shadow-lg !z-10">
+              <div
+                className="!px-4 !py-2 !text-sm !text-gray-700 hover:!bg-gray-100 !cursor-pointer"
+                onClick={() => {
+                  alert("Option 1 selected for " + workspace.workspace_name);
+                  setOpenDropdownIndex(null);
+                  if (window.innerWidth < 768) setSidebarOpen(false);
+                }}
+              >
+                Option 1
+              </div>
+              <div
+                className="!px-4 !py-2 !text-sm !text-gray-700 hover:!bg-gray-100 !cursor-pointer"
+                onClick={() => {
+                  alert("Option 2 selected for " + workspace.workspace_name);
+                  setOpenDropdownIndex(null);
+                  if (window.innerWidth < 768) setSidebarOpen(false);
+                }}
+              >
+                Option 2
+              </div>
+            </div>
+          )}
+        </div>
+      ))}
+
+      {/* Button for add new Workspaces */}
+      <button
+            onClick={handleAddWorkspace}
+            className="!rounded-md !bg-yellow-400 !px-4 !py-2 1font-medium !text-gray-800 !hover:bg-yellow-500 !flex !items-center !gap-2"
+          >
+            <span>Agregar</span>
+      </button>
+
+
+    </div>
+  </div>
+
+  {/* Overlay */}
+  {sidebarOpen && (
+    <div className="!fixed !inset-0 !z-30 !bg-black !bg-opacity-50 md:!hidden" onClick={toggleSidebar}></div>
+  )}
+
+  {/* Main Content */}
+  <div className="!flex-1 !overflow-auto !p-4">
+    <div className="!mb-4 !flex !items-center !justify-between">
+          <button
+            onClick={handleAddEmployee}
+            className="!rounded-md !bg-yellow-400 !px-4 !py-2 1font-medium !text-gray-800 !hover:bg-yellow-500 !flex !items-center !gap-2"
+          >
+            <span>Agregar</span>
+          </button>
+    </div>
+    <div className="!rounded-lg !border !border-gray-300 !bg-white">
+      {/* Header */}
+      <div className="!hidden md:!flex !border-b !border-gray-200 !p-4">
+        <div className="!w-1/4 !font-medium">ID</div>
+        <div className="!w-1/3 !font-medium">Name</div>
+        <div className="!flex-1 !font-medium">Job Title</div>
+      </div>
+
+      {/* Employee List */}
+      <div className="!p-4">
+        {employees.length > 0 ? (
+          employees.map((employee) => (
+            <div
+              key={employee.id}
+              className="!mb-2 !flex !flex-col md:!flex-row md:!items-center !rounded-md !border !border-gray-200 !p-3"
+            >
+              {/* Mobile layout */}
+                <div className="md:!hidden !mb-2 !rounded-md !border !border-gray-200 !p-3 !bg-white">
+                  <div className="!mb-2">
+                    <div><strong>ID:</strong> {employee.id}</div>
+                    <div><strong>Name:</strong> {employee.name}</div>
+                    <div><strong>Job Title:</strong> {employee.jobTitle}</div>
+                  </div>
+                  <div className="!flex !justify-end !gap-2">
+                    <button
+                      className="!rounded-full !bg-yellow-300 !p-2 hover:!bg-yellow-400"
+                      onClick={() => handleUpdateEmployee(employee.id)}
+                    >
+                      <Settings size={18} className="!text-gray-800" />
+                    </button>
+                    <button
+                      className="!rounded-full !bg-red-500 !p-2 hover:!bg-red-600"
+                      onClick={() => handleDeletedEmployee(employee.id)}
+                    >
+                      <X size={18} className="!text-white" />
+                    </button>
+                  </div>
+                </div>
+
+
+              {/* Desktop layout */}
+              <div className="!hidden md:!block !w-1/4">{employee.id}</div>
+              <div className="!hidden md:!block !w-1/3">{employee.name}</div>
+              <div className="!hidden md:!block !flex-1">{employee.jobTitle}</div>
+              <div className="!hidden md:!flex !gap-2">
+                <button className="!rounded-full !bg-yellow-300 !p-2 hover:!bg-yellow-400"
+                 onClick={() => handleUpdateEmployee(employee.id)}
+                >
+                  <Settings size={18} className="!text-gray-800" />
+                </button>
+                <button
+                  className="!rounded-full !bg-red-500 !p-2 hover:!bg-red-600"
+                  onClick={() => handleDeletedEmployee(employee.id)}
+                >
+                  <X size={18} className="!text-white" />
+                </button>
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="!py-8 !text-center !text-gray-500">
+            No employees found. Add employees to get started.
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+</div>
+  )
+}

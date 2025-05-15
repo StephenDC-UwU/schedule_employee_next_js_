@@ -8,6 +8,7 @@ export default async function SchedulePage() {
       fetch('http://localhost:5000/api/date_registers', { cache: 'no-store' }),
     ]);
   
+
     const [employees, workSpaces, dateRegisters] = await Promise.all([
       employeesRes.json(),
       workSpacesRes.json(),

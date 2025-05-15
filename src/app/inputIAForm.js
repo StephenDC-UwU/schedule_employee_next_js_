@@ -1,15 +1,24 @@
 'use client'
-import {useState} from 'react';
+import {useState,useRef,useEffect } from 'react';
+import { ProgressButtonComponent } from '@syncfusion/ej2-react-splitbuttons';
 
 export default function IAForm({onSubmit, loading}){
-
     const [textIA, setTextIA] = useState("");
+    const progressBtnRef = useRef(null);
+
+    const spinCenter = { position: 'Center' };
+    const zoomOut = { effect: 'ZoomOut' };
+
+    useEffect(() => {
+      if(!loading) {
+        setTextIA('');
+      }
+    }, [loading]);
 
     const handleSubmit = (e) => {
         e.preventDefault();
         if (!textIA.trim()) return;
         onSubmit(textIA);
-        setTextIA("");
     };
 
   return (
@@ -25,13 +34,16 @@ export default function IAForm({onSubmit, loading}){
         value={textIA}
       ></textarea>
 
-      <button
-        type="submit"
-        disabled={loading}
-        className={`!px-6 !py-2 !rounded !w-24 !text-black ${loading ? '!bg-gray-400' : '!bg-green-600 hover:!bg-green-700'}`}
-      >
-        {loading ? "Sending..." : "Send"}
-      </button>
+       <ProgressButtonComponent 
+       ref={progressBtnRef}
+       type='submit'
+       disabled={loading}
+       spinSettings={spinCenter} 
+       animationSettings={zoomOut} 
+       cssClass="e-round e-success"
+       iconCss="e-btn-sb-icons e-play-icon"
+       >
+       </ProgressButtonComponent>
     </form>
   );
 
