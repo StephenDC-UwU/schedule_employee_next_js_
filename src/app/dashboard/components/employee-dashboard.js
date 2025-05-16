@@ -221,6 +221,7 @@ export default function EmployeeDashboard({getEmployees, getWorkspaces}) {
             <span>Add New Employee</span>
           </button>
     </div>
+
     <div className="!rounded-lg !border !border-gray-300 !bg-white">
       {/* Header */}
       <div className="!hidden md:!flex !border-b !border-gray-200 !p-4">
@@ -287,9 +288,9 @@ export default function EmployeeDashboard({getEmployees, getWorkspaces}) {
         )}
       </div>
     </div>
+
+    
   </div>
-
-
 </div>
   )
 }

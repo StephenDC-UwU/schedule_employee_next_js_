@@ -14,7 +14,6 @@ export default async function Home() {
     }));
     const mappedWorkspaces = await workspacesRes.json();
 
-    console.log("Mapped Employees:", mappedEmployees);
 
     return (
       <main className="!min-h-screen !bg-gray-100">
