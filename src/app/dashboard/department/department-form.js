@@ -1,62 +1,159 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { ChevronDown } from "lucide-react"
+import { useRouter,useSearchParams } from "next/navigation"
 
 export default function DepartmentForm() {
-  const [name, setName] = useState("")
-  const [isColorPickerOpen, setIsColorPickerOpen] = useState(false)
-  const [selectedColor, setSelectedColor] = useState(null)
+
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const workspace_id = searchParams.get('id');
+    const [isColorPickerOpen, setIsColorPickerOpen] = useState(false)
+    const [selectedColor, setSelectedColor] = useState(null)
+    const [workspaceData, setWorkspaceData] = useState({
+        workspace_name : "",
+        color : ""
+    });
+
+    const [formMode, setFormMode] = useState("create");
+
+    useEffect(() => {
+        if ( workspace_id ) {
+          setFormMode("update");
+
+          const fetchWorkspace = async () =>{
+            try {
+              const res = await fetch(`http://localhost:5000/api/workspaces/${workspace_id}`);
+              const data = await res.json()
+              console.log(data);
+              setWorkspaceData(data.data);
+              setSelectedColor({
+                    bg: data.data.color,
+                    text: "#ffffff"
+                });
+            } catch (error) {
+              console.error("Error getting Workspace ", error);
+            }
+          };
+    
+          fetchWorkspace();
+
+        } else {
+          setFormMode("create");
+
+        }
+      }, [workspace_id]);
+    
 
   // Tailwind color palette
   const colorPalette = [
     // Reds
-    { bg: "bg-red-400", text: "text-white" },
-    { bg: "bg-red-500", text: "text-white" },
-    { bg: "bg-red-600", text: "text-white" },
+    { bg: "#f87171", text: "#ffffff" },
+    { bg: "#ef4444", text: "#ffffff" },
+    { bg: "#dc2626", text: "#ffffff" },
     // Blues
-    { bg: "bg-blue-400", text: "text-white" },
-    { bg: "bg-blue-500", text: "text-white" },
-    { bg: "bg-blue-600", text: "text-white" },
+    { bg: "#60a5fa", text: "#ffffff" },
+    { bg: "#3b82f6", text: "#ffffff" },
+    { bg: "#2563eb", text: "#ffffff" },
     // Greens
-    { bg: "bg-green-400", text: "text-white" },
-    { bg: "bg-green-500", text: "text-white" },
-    { bg: "bg-green-600", text: "text-white" },
+    { bg: "#4ade80", text: "#ffffff" },
+    { bg: "#22c55e", text: "#ffffff" },
+    { bg: "#16a34a", text: "#ffffff" },
     // Yellows
-    { bg: "bg-yellow-300", text: "text-gray-800" },
-    { bg: "bg-yellow-400", text: "text-gray-800" },
-    { bg: "bg-yellow-500", text: "text-gray-800" },
+    { bg: "#fde047", text: "#1f2937" },
+    { bg: "#facc15", text: "#1f2937" },
+    { bg: "#eab308", text: "#1f2937" },
     // Purples
-    { bg: "bg-purple-400", text: "text-white" },
-    { bg: "bg-purple-500", text: "text-white" },
-    { bg: "bg-purple-600", text: "text-white" },
+    { bg: "#a78bfa", text: "#ffffff" },
+    { bg: "#8b5cf6", text: "#ffffff" },
+    { bg: "#7c3aed", text: "#ffffff" },
     // Pinks
-    { bg: "bg-pink-400", text: "text-white" },
-    { bg: "bg-pink-500", text: "text-white" },
-    { bg: "bg-pink-600", text: "text-white" },
+    { bg: "#f472b6", text: "#ffffff" },
+    { bg: "#ec4899", text: "#ffffff" },
+    { bg: "#db2777", text: "#ffffff" },
     // Grays
-    { bg: "bg-gray-300", text: "text-gray-800" },
-    { bg: "bg-gray-400", text: "text-white" },
-    { bg: "bg-gray-500", text: "text-white" },
+    { bg: "#d1d5db", text: "#1f2937" },
+    { bg: "#9ca3af", text: "#ffffff" },
+    { bg: "#6b7280", text: "#ffffff" },
     // Indigos
-    { bg: "bg-indigo-400", text: "text-white" },
-    { bg: "bg-indigo-500", text: "text-white" },
-    { bg: "bg-indigo-600", text: "text-white" },
+    { bg: "#818cf8", text: "#ffffff" },
+    { bg: "#6366f1", text: "#ffffff" },
+    { bg: "#4f46e5", text: "#ffffff" },
     // Teals
-    { bg: "bg-teal-400", text: "text-white" },
-    { bg: "bg-teal-500", text: "text-white" },
-    { bg: "bg-teal-600", text: "text-white" },
-  ]
+    { bg: "#2dd4bf", text: "#ffffff" },
+    { bg: "#14b8a6", text: "#ffffff" },
+    { bg: "#0d9488", text: "#ffffff" },
+    { bg: "#bbdc00", text: "#ffffff" },
+    ];
+
+
+
+      // Create Employee
+  const handleCreateWorkspace = (workspace) => {
+      fetch('http://localhost:5000/api/workspaces', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(workspace),
+      })
+      .then(async (response) => {
+        const text = await response.text();
+        console.log('Response from Server:', text);
+        return JSON.parse(text); 
+      })
+      .then((data) => {
+        console.log('Workspace Created:', data);
+      })
+      .catch((error) => {
+        console.error('Error Create Workspace:', error);
+      })
+      .finally(()=>{
+
+      })
+  };
+
+  // Update Employee
+  const handleUpdateWorkspace = (workspace) => {
+      fetch('http://localhost:5000/api/workspaces', {
+        method: 'PUT',
+        headers: {
+          'Content-Type' : 'application/json',
+        },
+        body: JSON.stringify(workspace),
+      })
+      .then(async (response) => {
+        const text = await response.text();
+        console.log('Response from Server:', text);
+        return JSON.parse(text); 
+      })
+      .then((data) => {
+        console.log('Workspace Updated:', data);
+      })
+      .catch((error) => {
+        console.error('Error Update Workspace:', error);
+      })
+      .finally(()=>{
+
+      })
+    };
+
 
   const handleSubmit = (e) => {
-    e.preventDefault()
-    alert(`Department created: ${name}, Color: ${selectedColor ? selectedColor.bg : "None"}`)
-  }
+    e.preventDefault();
+    if (formMode === "create") {
+      handleCreateWorkspace(workspaceData);
+      router.push('/dashboard');
+    } else {
+      handleUpdateWorkspace(workspaceData);
+      router.push('/dashboard');
+    }
+  };
+
 
   const handleCancel = () => {
-    setName("")
-    setSelectedColor(null)
-    setIsColorPickerOpen(false)
+     router.push('/dashboard');
   }
 
   return (
@@ -65,7 +162,7 @@ export default function DepartmentForm() {
             {/* Header Button */}
             <div className="!mb-6 !overflow-hidden !rounded-md !border !border-gray-300 !bg-yellow-300">
             <button className="!w-full !py-4 !px-6 !text-center !text-lg !font-bold !text-gray-800">
-                REGISTER NEW DEPARTMENT
+                {formMode === "create" ? "REGISTER NEW DEPARTMENT" : "UPDATE DEPARTMENT"}
             </button>
             </div>
 
@@ -76,8 +173,8 @@ export default function DepartmentForm() {
                 <div className="!mb-6">
                 <input
                     type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
+                    value={workspaceData.workspace_name}
+                    onChange={(e) => setWorkspaceData((prev) => ({...prev, workspace_name: e.target.value,}))}
                     placeholder="Name"
                     className="!w-full !rounded-md !border !border-gray-300 !p-3 !focus:border-yellow-300 !focus:outline-none"
                     required
@@ -92,12 +189,19 @@ export default function DepartmentForm() {
                 >
                     <div className="!flex !items-center !gap-2">
                     {selectedColor ? (
-                        <div className={`!h-5 !w-5 !rounded-full ${selectedColor.bg}`}></div>
+                        <div
+                        className="!h-5 !w-5 !rounded-full"
+                        style={{ backgroundColor: selectedColor.bg }}
+                        ></div>
                     ) : null}
-                    <span className={selectedColor ? "!text-gray-800" : "!text-gray-500"}>
-                        {selectedColor ? "Color selected" : "Select Color"}
+                    <span
+                        className={selectedColor ? "!text-gray-800" : "!text-gray-500"}
+                    >
+                        {selectedColor ? `Color ${selectedColor.bg}` : "Select Color"}
                     </span>
                     </div>
+
+
                     <div className="!flex !h-8 !w-8 !items-center !justify-center !rounded-full !bg-red-400">
                     <ChevronDown size={20} className="!text-gray-800" />
                     </div>
@@ -110,22 +214,30 @@ export default function DepartmentForm() {
                         {colorPalette.map((color, index) => (
                         <div
                             key={index}
-                            className={`!h-8 !w-8 !cursor-pointer !rounded-full ${color.bg} !flex !items-center !justify-center ${
-                            selectedColor && selectedColor.bg === color.bg
-                                ? "!ring-2 !ring-offset-2 !ring-gray-500"
-                                : ""
-                            }`}
+                            className="!h-8 !w-8 !cursor-pointer !rounded-full !flex !items-center !justify-center"
+                            style={{
+                            backgroundColor: color.bg,
+                            boxShadow:
+                                selectedColor && selectedColor.bg === color.bg
+                                ? "0 0 0 2px white, 0 0 0 4px #6b7280"
+                                : "none",
+                            }}
                             onClick={() => {
+
                             setSelectedColor(color);
                             setIsColorPickerOpen(false);
+                            setWorkspaceData( prev => ({
+                                ...prev,
+                                color: color.bg
+                            }));
                             }}
                         >
                             {selectedColor && selectedColor.bg === color.bg ? (
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
-                                className={`!h-4 !w-4 ${color.text}`}
+                                className="!h-4 !w-4"
                                 viewBox="0 0 20 20"
-                                fill="currentColor"
+                                fill={color.text}
                             >
                                 <path
                                 fillRule="evenodd"
@@ -140,14 +252,14 @@ export default function DepartmentForm() {
                     </div>
                 )}
                 </div>
-
+                
                 {/* Action Buttons */}
                 <div className="!mt-auto !flex !justify-between !gap-4">
                 <button
                     type="submit"
                     className="!flex-1 !rounded-md !bg-green-500 !py-3 !font-medium !text-white hover:!bg-green-600"
                 >
-                    Create
+                    {formMode === "create" ? "Create" : "Update"}
                 </button>
                 <button
                     type="button"

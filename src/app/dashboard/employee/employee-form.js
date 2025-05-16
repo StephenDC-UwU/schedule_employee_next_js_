@@ -8,6 +8,7 @@ export default function EmployeeForm() {
   const employeeId = searchParams.get('id');
   
   const [formMode, setFormMode] = useState("create");
+  
   const [employeeData, setEmployeeData] = useState({
     employee_name: "",
     job_title: ""

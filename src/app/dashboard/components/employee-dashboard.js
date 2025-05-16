@@ -14,7 +14,7 @@ export default function EmployeeDashboard({getEmployees, getWorkspaces}) {
   const [openDropdownIndex, setOpenDropdownIndex] = useState(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
-   const handleDeleteEmployee = (id) => {
+  const handleDeleteEmployee = (id) => {
         fetch(`http://localhost:5000/api/employees?id=${id}`, {
           method: 'DELETE',
           headers: {
@@ -37,6 +37,30 @@ export default function EmployeeDashboard({getEmployees, getWorkspaces}) {
         })
   };
 
+  const handleDeleteWorkspace = (id) => {
+       fetch(`http://localhost:5000/api/workspaces?id=${id}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type' : 'application/json',
+          },
+        })
+        .then(async (response) => {
+          const text = await response.text();
+          console.log('Response from Server:', text);
+          return JSON.parse(text); 
+        })
+        .then((data) => {
+          console.log('Workspace Deleted', data);
+        })
+        .catch((error) => {
+          console.error('Error Delete Workspace:', error);
+        })
+        .finally(()=>{
+
+        })
+  }
+
+
   const handleDeletedEmployee = (id) => {
     setEmployees(employees.filter((employee) => employee.id !== id))
     handleDeleteEmployee(id);
@@ -55,8 +79,19 @@ export default function EmployeeDashboard({getEmployees, getWorkspaces}) {
     router.push(`/dashboard/employee?id=${id}`);
   };
 
+
+  /* Management Department */
+  const handleUpdateDepartment = (id) => {
+    router.push(`/dashboard/department?id=${id}`);
+  }
+
+  const handleDeletedDepartment = (id) => {
+    setWorkspaces(workspaces.filter((department) => department.workspace_id !==id ));
+    handleDeleteWorkspace(id);
+  }
+
   const handleAddWorkspace = () => {
-    alert("Funcionalidad para agregar workspace");
+    router.push('/dashboard/department');
   }
 
   const handleReturnSchedule = () => {
@@ -135,22 +170,22 @@ export default function EmployeeDashboard({getEmployees, getWorkspaces}) {
               <div
                 className="!px-4 !py-2 !text-sm !text-gray-700 hover:!bg-gray-100 !cursor-pointer"
                 onClick={() => {
-                  alert("Option 1 selected for " + workspace.workspace_name);
+                  handleUpdateDepartment(workspace.workspace_id);
                   setOpenDropdownIndex(null);
                   if (window.innerWidth < 768) setSidebarOpen(false);
                 }}
               >
-                Option 1
+                Setting
               </div>
               <div
                 className="!px-4 !py-2 !text-sm !text-gray-700 hover:!bg-gray-100 !cursor-pointer"
                 onClick={() => {
-                  alert("Option 2 selected for " + workspace.workspace_name);
+                  handleDeletedDepartment(workspace.workspace_id);
                   setOpenDropdownIndex(null);
                   if (window.innerWidth < 768) setSidebarOpen(false);
                 }}
               >
-                Option 2
+                Delete
               </div>
             </div>
           )}
@@ -162,7 +197,7 @@ export default function EmployeeDashboard({getEmployees, getWorkspaces}) {
             onClick={handleAddWorkspace}
             className="!rounded-md !bg-yellow-400 !px-4 !py-2 1font-medium !text-gray-800 !hover:bg-yellow-500 !flex !items-center !gap-2"
           >
-            <span>Agregar</span>
+            <span>Add New Department</span>
       </button>
 
 
@@ -174,6 +209,8 @@ export default function EmployeeDashboard({getEmployees, getWorkspaces}) {
     <div className="!fixed !inset-0 !z-30 !bg-black !bg-opacity-50 md:!hidden" onClick={toggleSidebar}></div>
   )}
 
+
+
   {/* Main Content */}
   <div className="!flex-1 !overflow-auto !p-4">
     <div className="!mb-4 !flex !items-center !justify-between">
@@ -181,7 +218,7 @@ export default function EmployeeDashboard({getEmployees, getWorkspaces}) {
             onClick={handleAddEmployee}
             className="!rounded-md !bg-yellow-400 !px-4 !py-2 1font-medium !text-gray-800 !hover:bg-yellow-500 !flex !items-center !gap-2"
           >
-            <span>Agregar</span>
+            <span>Add New Employee</span>
           </button>
     </div>
     <div className="!rounded-lg !border !border-gray-300 !bg-white">
@@ -251,6 +288,15 @@ export default function EmployeeDashboard({getEmployees, getWorkspaces}) {
       </div>
     </div>
   </div>
+
+
 </div>
   )
 }
+
+
+
+
+
+
+
