@@ -1,18 +1,32 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo} from "react"
 import {useRouter} from "next/navigation"
 import { Settings, X, MoreVertical, Menu, ChevronLeft } from "lucide-react"
+import {
+  useReactTable,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getSortedRowModel,
+  getFacetedUniqueValues,
+  flexRender,
+} from "@tanstack/react-table";
 
 export default function EmployeeDashboard({getEmployees, getWorkspaces}) {
 
   const router = useRouter();
 
-  const [employees, setEmployees] = useState(getEmployees)
-  const [workspaces, setWorkspaces] = useState(getWorkspaces)
-  const [selectedWorkspace, setSelectedWorkspace] = useState(0)
-  const [openDropdownIndex, setOpenDropdownIndex] = useState(null)
-  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [employees, setEmployees] = useState(getEmployees);
+  const [workspaces, setWorkspaces] = useState(getWorkspaces);
+
+  const [selectedWorkspace, setSelectedWorkspace] = useState(0);
+  const [openDropdownIndex, setOpenDropdownIndex] = useState(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const [globalFilter, setGlobalFilter] = useState("");
+
+
+
 
   const handleDeleteEmployee = (id) => {
         fetch(`http://localhost:5000/api/employees?id=${id}`, {
@@ -98,7 +112,62 @@ export default function EmployeeDashboard({getEmployees, getWorkspaces}) {
     router.push('/');
   }
 
+
+   const columns = useMemo(() => [
+    {
+      accessorKey: "id",
+      header: "ID",
+    },
+    {
+      accessorKey: "name",
+      header: "Name",
+    },
+    {
+      accessorKey: "jobTitle",
+      header: "Job Title",
+    },
+    {
+      id: "actions",
+      header: "",
+      cell: ({ row }) => {
+        const employee = row.original;
+        return (
+          <div className="!flex !gap-2 !justify-end">
+            <button
+              className="!rounded-full !bg-yellow-300 !p-2 hover:!bg-yellow-400"
+              onClick={() => handleUpdateEmployee(employee.id)}
+            >
+              <Settings size={18} className="!text-gray-800" />
+            </button>
+            <button
+              className="!rounded-full !bg-red-500 !p-2 hover:!bg-red-600"
+              onClick={() => handleDeletedEmployee(employee.id)}
+            >
+              <X size={18} className="!text-white" />
+            </button>
+          </div>
+        );
+      },
+    },
+  ], []);
+
+
+
+  const table = useReactTable({
+    data: employees,
+    columns,
+    state: { globalFilter },
+    onGlobalFilterChange: setGlobalFilter,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFacetedUniqueValues: getFacetedUniqueValues(),
+    globalFilterFn: 'includesString',
+  });
+
+
   return (
+
     <div className="!flex !h-screen !w-full !flex-col md:!flex-row">
 
   {/* Mobile Header */}
@@ -202,95 +271,116 @@ export default function EmployeeDashboard({getEmployees, getWorkspaces}) {
 
 
     </div>
-  </div>
-
-  {/* Overlay */}
-  {sidebarOpen && (
-    <div className="!fixed !inset-0 !z-30 !bg-black !bg-opacity-50 md:!hidden" onClick={toggleSidebar}></div>
-  )}
-
-
-
-  {/* Main Content */}
-  <div className="!flex-1 !overflow-auto !p-4">
-    <div className="!mb-4 !flex !items-center !justify-between">
-          <button
-            onClick={handleAddEmployee}
-            className="!rounded-md !bg-yellow-400 !px-4 !py-2 1font-medium !text-gray-800 !hover:bg-yellow-500 !flex !items-center !gap-2"
-          >
-            <span>Add New Employee</span>
-          </button>
-    </div>
-
-    <div className="!rounded-lg !border !border-gray-300 !bg-white">
-      {/* Header */}
-      <div className="!hidden md:!flex !border-b !border-gray-200 !p-4">
-        <div className="!w-1/4 !font-medium">ID</div>
-        <div className="!w-1/3 !font-medium">Name</div>
-        <div className="!flex-1 !font-medium">Job Title</div>
       </div>
 
-      {/* Employee List */}
-      <div className="!p-4">
-        {employees.length > 0 ? (
-          employees.map((employee) => (
-            <div
-              key={employee.id}
-              className="!mb-2 !flex !flex-col md:!flex-row md:!items-center !rounded-md !border !border-gray-200 !p-3"
-            >
-              {/* Mobile layout */}
-                <div className="md:!hidden !mb-2 !rounded-md !border !border-gray-200 !p-3 !bg-white">
-                  <div className="!mb-2">
-                    <div><strong>ID:</strong> {employee.id}</div>
-                    <div><strong>Name:</strong> {employee.name}</div>
-                    <div><strong>Job Title:</strong> {employee.jobTitle}</div>
-                  </div>
-                  <div className="!flex !justify-end !gap-2">
-                    <button
-                      className="!rounded-full !bg-yellow-300 !p-2 hover:!bg-yellow-400"
-                      onClick={() => handleUpdateEmployee(employee.id)}
-                    >
-                      <Settings size={18} className="!text-gray-800" />
-                    </button>
-                    <button
-                      className="!rounded-full !bg-red-500 !p-2 hover:!bg-red-600"
-                      onClick={() => handleDeletedEmployee(employee.id)}
-                    >
-                      <X size={18} className="!text-white" />
-                    </button>
-                  </div>
-                </div>
+      {/* Overlay */}
+      {sidebarOpen && (
+        <div className="!fixed !inset-0 !z-30 !bg-black !bg-opacity-50 md:!hidden" onClick={toggleSidebar}></div>
+      )}
 
 
-              {/* Desktop layout */}
-              <div className="!hidden md:!block !w-1/4">{employee.id}</div>
-              <div className="!hidden md:!block !w-1/3">{employee.name}</div>
-              <div className="!hidden md:!block !flex-1">{employee.jobTitle}</div>
-              <div className="!hidden md:!flex !gap-2">
-                <button className="!rounded-full !bg-yellow-300 !p-2 hover:!bg-yellow-400"
-                 onClick={() => handleUpdateEmployee(employee.id)}
-                >
-                  <Settings size={18} className="!text-gray-800" />
-                </button>
-                <button
-                  className="!rounded-full !bg-red-500 !p-2 hover:!bg-red-600"
-                  onClick={() => handleDeletedEmployee(employee.id)}
-                >
-                  <X size={18} className="!text-white" />
-                </button>
-              </div>
-            </div>
-          ))
-        ) : (
-          <div className="!py-8 !text-center !text-gray-500">
-            No employees found. Add employees to get started.
+
+      {/* Main Content */}
+      <div className="!flex-1 !overflow-auto !p-4">
+        <div className="!mb-4 !flex !items-center !justify-between">
+              <button
+                onClick={handleAddEmployee}
+                className="!rounded-md !bg-yellow-400 !px-4 !py-2 1font-medium !text-gray-800 !hover:bg-yellow-500 !flex !items-center !gap-2"
+              >
+                <span>Add New Employee</span>
+              </button>
+        </div>
+
+
+        <div className="!flex-1 !overflow-auto !p-4">
+          <div className="!mb-4 !flex !items-center !justify-between !gap-4 !flex-wrap">
+            <input
+              type="text"
+              placeholder="Buscar..."
+              value={globalFilter}
+              onChange={(e) => setGlobalFilter(e.target.value)}
+              className="!border !border-gray-300 !rounded-md !px-3 !py-2"
+            />
           </div>
-        )}
-      </div>
-    </div>
 
-    
-  </div>
+          <div className="!rounded-lg !border !border-gray-300 !bg-white">
+            {/* Header */}
+            <div className="!hidden md:!flex !border-b !border-gray-200 !p-4 !font-medium !bg-gray-50">
+              {table.getHeaderGroups().map(headerGroup =>
+                headerGroup.headers.map(header => (
+                  <div
+                    key={header.id}
+                    className={`!px-2 ${
+                      header.column.id === 'id' ? '!w-1/4'
+                      : header.column.id === 'name' ? '!w-1/3'
+                      : header.column.id === 'jobTitle' ? '!flex-1'
+                      : header.column.id === 'actions' ? '!w-auto !flex !justify-end'
+                      : '!w-auto'
+                    }`}
+                  >
+                    {flexRender(header.column.columnDef.header, header.getContext())}
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Rows */}
+            <div className="!p-4">
+              {table.getRowModel().rows.length > 0 ? (
+                table.getRowModel().rows.map(row => (
+                  <div
+                    key={row.id}
+                    className="!mb-2 !flex !flex-col md:!flex-row md:!items-center !rounded-md !border !border-gray-200 !p-3"
+                  >
+                    {/* Mobile layout */}
+                    <div className="md:!hidden !mb-2 !rounded-md !border !border-gray-200 !p-3 !bg-white">
+                      <div className="!mb-2">
+                        <div><strong>ID:</strong> {row.original.id}</div>
+                        <div><strong>Name:</strong> {row.original.name}</div>
+                        <div><strong>Job Title:</strong> {row.original.jobTitle}</div>
+                      </div>
+                      <div className="!flex !justify-end !gap-2">
+                        <button
+                          className="!rounded-full !bg-yellow-300 !p-2 hover:!bg-yellow-400"
+                          onClick={() => handleUpdateEmployee(row.original.id)}
+                        >
+                          <Settings size={18} className="!text-gray-800" />
+                        </button>
+                        <button
+                          className="!rounded-full !bg-red-500 !p-2 hover:!bg-red-600"
+                          onClick={() => handleDeletedEmployee(row.original.id)}
+                        >
+                          <X size={18} className="!text-white" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Desktop layout */}
+                    {row.getVisibleCells().map(cell => (
+                      <div
+                        key={cell.id}
+                        className={`!hidden md:!block !px-2 ${
+                          cell.column.id === 'id' ? '!w-1/4'
+                          : cell.column.id === 'name' ? '!w-1/3'
+                          : cell.column.id === 'jobTitle' ? '!flex-1'
+                          : cell.column.id === 'actions' ? '!w-auto !flex !justify-end !gap-2'
+                          : ''
+                        }`}
+                      >
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </div>
+                    ))}
+                  </div>
+                ))
+              ) : (
+                <div className="!py-8 !text-center !text-gray-500">
+                  No employees found.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+    </div>
 </div>
   )
 }
