@@ -13,7 +13,8 @@ export default async function Home() {
       jobTitle: emp.job_title
     }));
     const mappedWorkspaces = await workspacesRes.json();
-
+    console.log(mappedEmployees);
+    console.log(mappedWorkspaces);
 
     return (
       <main className="!min-h-screen !bg-gray-100">
