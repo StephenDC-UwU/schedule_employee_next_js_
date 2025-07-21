@@ -1,9 +1,13 @@
+"use client";
+import { Suspense } from "react";
 import DepartmentForm from "./department-form";
 
 export default function Home() {
   return (
     <main className="!min-h-screen">
-      <DepartmentForm />
+      <Suspense fallback={<div>Loading form...</div>}>
+        <DepartmentForm />
+      </Suspense>
     </main>
-  )
+  );
 }
