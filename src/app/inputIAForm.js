@@ -1,25 +1,25 @@
-'use client'
-import {useState,useRef,useEffect } from 'react';
-import { ProgressButtonComponent } from '@syncfusion/ej2-react-splitbuttons';
+"use client";
+import { useState, useRef, useEffect } from "react";
+import { ProgressButtonComponent } from "@syncfusion/ej2-react-splitbuttons";
 
-export default function IAForm({onSubmit, loading}){
-    const [textIA, setTextIA] = useState("");
-    const progressBtnRef = useRef(null);
+export default function IAForm({ onSubmit, loading }) {
+  const [textIA, setTextIA] = useState("");
+  const progressBtnRef = useRef(null);
 
-    const spinCenter = { position: 'Center' };
-    const zoomOut = { effect: 'ZoomOut' };
+  const spinCenter = { position: "Center" };
+  const zoomOut = { effect: "ZoomOut" };
 
-    useEffect(() => {
-      if(!loading) {
-        setTextIA('');
-      }
-    }, [loading]);
+  useEffect(() => {
+    if (!loading) {
+      setTextIA("");
+    }
+  }, [loading]);
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        if (!textIA.trim()) return;
-        onSubmit(textIA);
-    };
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!textIA.trim()) return;
+    onSubmit(textIA);
+  };
 
   return (
     <form
@@ -34,17 +34,15 @@ export default function IAForm({onSubmit, loading}){
         value={textIA}
       ></textarea>
 
-       <ProgressButtonComponent 
-       ref={progressBtnRef}
-       type='submit'
-       disabled={loading}
-       spinSettings={spinCenter} 
-       animationSettings={zoomOut} 
-       cssClass="e-round e-success"
-       iconCss="e-btn-sb-icons e-play-icon"
-       >
-       </ProgressButtonComponent>
+      <ProgressButtonComponent
+        ref={progressBtnRef}
+        type="submit"
+        disabled={loading}
+        spinSettings={spinCenter}
+        animationSettings={zoomOut}
+        cssClass="e-round e-success"
+        iconCss="e-btn-sb-icons e-play-icon"
+      ></ProgressButtonComponent>
     </form>
   );
-
 }
